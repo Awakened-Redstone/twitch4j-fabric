@@ -21,8 +21,10 @@ jobs:
       - run: ./gradlew build modrinth
         env:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
-      - run: ./gradlew build publish
-        env:
-          MAVEN_REPO: ${{ secrets.MAVEN_REPO }}
-          MAVEN_AUTH_HEADER: ${{ secrets.MAVEN_AUTH_HEADER }}
-          MAVEN_AUTH_TOKEN: ${{ secrets.MAVEN_AUTH_TOKEN }}
+      #- run: ./gradlew build publish
+      #  env:
+      #    ORG_GRADLE_PROJECT_mavenRepoUrl: ${{ secrets.MAVEN_REPO_URL }}
+      #    ORG_GRADLE_PROJECT_mavenRepoUsername: ${{ secrets.MAVEN_REPO_USERNAME }}
+      #    ORG_GRADLE_PROJECT_mavenRepoPassword: ${{ secrets.MAVEN_REPO_PASSWORD }}
+      #    ORG_GRADLE_PROJECT_signingKey: ${{ secrets.MAVEN_SIGNING_KEY }}
+      #    ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.MAVEN_SIGNING_KEY_PASSWORD }}

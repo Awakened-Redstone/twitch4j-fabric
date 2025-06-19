@@ -6,6 +6,7 @@ plugins {
     id 'fabric-loom' version '1.8-SNAPSHOT'
     id "com.modrinth.minotaur" version "2.+"
     id 'maven-publish'
+    id 'signing'
 }
 
 def CHANGELOG = new File('CHANGELOG.md').exists() ? new File('CHANGELOG.md').text : ""
@@ -121,12 +122,69 @@ jar {
     }
 }
 
+tasks.register('emptyJavadocJar', Jar) {
+    archiveClassifier.set('javadoc')
+}
+
+tasks.register('emptySourcesJar', Jar) {
+    archiveClassifier.set('sources')
+}
+
 // configure the maven publication
 publishing {
     publications {
         mavenJava(MavenPublication) {
             artifactId = archivesBaseName
             from components.java
+
+            artifact(emptySourcesJar) {
+                classifier = 'sources'
+                builtBy emptySourcesJar
+            }
+            artifact(emptyJavadocJar) {
+                classifier = 'javadoc'
+                builtBy emptyJavadocJar
+            }
+
+            pom {
+                name = 'twitch4j-fabric'
+                description = 'Twitch4J packed as a Fabric Mod'
+                url = 'https://twitch4j.github.io'
+                issueManagement {
+                    system = "GitHub"
+                    url = "https://github.com/twitch4j/twitch4j-fabric/issues"
+                }
+                licenses {
+                    license {
+                        name = 'MIT Licence'
+                        distribution = 'repo'
+                        url = 'https://opensource.org/licenses/MIT'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'PhilippHeuer'
+                        name = 'Philipp Heuer'
+                        email = 'git@philippheuer.me'
+                        roles = ['maintainer']
+                    }
+                    developer {
+                        id = 'iProdigy'
+                        name = 'Sidd'
+                        roles = ['maintainer']
+                    }
+                    developer {
+                        id = 'AwakenedRedstone'
+                        name = 'Awakened Redstone'
+                        roles = ['maintainer']
+                    }
+                }
+                scm {
+                    connection = 'scm:git:https://github.com/twitch4j/twitch4j-fabric.git'
+                    developerConnection = 'scm:git:git@github.com:twitch4j/twitch4j-fabric.git'
+                    url = 'https://github.com/twitch4j/twitch4j-fabric'
+                }
+            }
         }
     }
 
@@ -134,16 +192,34 @@ publishing {
     repositories {
         //mavenLocal()
         maven {
-            url = System.getenv().MAVEN_REPO
-            credentials(HttpHeaderCredentials) {
-                name System.getenv().MAVEN_AUTH_HEADER
-                value System.getenv().MAVEN_AUTH_TOKEN
-            }
-            authentication {
-                header(HttpHeaderAuthentication)
+            url = project.findProperty("mavenRepoUrl")
+            credentials {
+                username = project.findProperty("mavenRepoUsername")
+                password = project.findProperty("mavenRepoPassword")
             }
         }
     }
+}
+
+tasks.named("generateMetadataFileForMavenJavaPublication") {
+    dependsOn tasks.named("emptySourcesJar"), tasks.named("emptyJavadocJar")
+}
+
+def signingKey = project.findProperty("signingKey")
+def signingPassword = project.findProperty("signingPassword")
+
+signing {
+    // use in-memory signing
+    if (signingKey != null) {
+        def decodedSigningKey = new String(Base64.decoder.decode(signingKey.toString()), "UTF-8")
+        useInMemoryPgpKeys(decodedSigningKey, (String) signingPassword)
+    } else {
+        required = false // only sign when credentials are configured
+        if (!project.hasProperty("gnupg.skip")) {
+            useGpgCmd()
+        }
+    }
+    sign publishing.publications.mavenJava
 }
 
 tasks.register('remapMavenJar', RemapJarTask) {
