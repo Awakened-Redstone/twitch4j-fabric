@@ -48,6 +48,7 @@
   "environment": "*",
   "depends": {
     "fabricloader": ">=0.14.23",
+    "fabric-language-kotlin": ">=1.13.7+kotlin.2.2.21",
     "minecraft": "*"
   }
 }
